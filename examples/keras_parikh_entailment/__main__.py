@@ -1,3 +1,6 @@
+# -*- encoding:utf-8 -*-
+# coding: utf-8
+
 from __future__ import division, unicode_literals, print_function
 import spacy
 import os
