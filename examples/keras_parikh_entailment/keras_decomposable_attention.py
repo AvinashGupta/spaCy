@@ -1,3 +1,6 @@
+# -*- encoding:utf-8 -*-
+# coding: utf-8
+
 # Semantic similarity with decomposable attention (using spaCy and Keras)
 # Practical state-of-the-art text similarity with spaCy and Keras
 import numpy
