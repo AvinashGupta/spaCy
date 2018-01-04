@@ -6,16 +6,23 @@ from pathlib import Path
 import ujson as json
 import numpy
 from keras.utils.np_utils import to_categorical
+from keras.callbacks import ModelCheckpoint, LambdaCallback
 
 from spacy_hook import get_embeddings, get_word_ids
 from spacy_hook import create_similarity_pipeline
 
 from keras_decomposable_attention import build_model
+import boto3
 
 try:
     import cPickle as pickle
 except ImportError:
     import pickle
+
+s3 = boto3.client('s3',
+    aws_access_key_id= os.environ['ID'],
+    aws_secret_access_key= os.environ['SECRET'],
+    region_name= os.environ['REGION'])
 
 
 def train(train_loc, dev_loc, shape, settings):
@@ -36,20 +43,37 @@ def train(train_loc, dev_loc, shape, settings):
                          tree_truncate=settings['tree_truncate']))
     train_X1, train_X2, dev_X1, dev_X2 = Xs
     print(settings)
+
+    def save_model(epoch=None, logs=None):
+        if not (nlp.path / 'similarity').exists():
+            (nlp.path / 'similarity').mkdir()
+        print("Saving to", nlp.path / 'similarity')
+        weights = model.get_weights()
+        name = nlp.path / 'similarity' / 'model' 
+        with (name).open('wb') as file_:
+            pickle.dump(weights[1:], file_)
+            s3.upload_file(
+                name, "temp-dl", name
+            )
+        
+        name = nlp.path / 'similarity' / 'config.json'
+        with (name).open('wb') as file_:
+            file_.write(model.to_json())
+            s3.upload_file(
+                name, "temp-dl", name
+            )
+
+    json_logging_callback = LambdaCallback(
+        on_epoch_end=save_model,
+    )
+
     model.fit(
         [train_X1, train_X2],
         train_labels,
         validation_data=([dev_X1, dev_X2], dev_labels),
         nb_epoch=settings['nr_epoch'],
-        batch_size=settings['batch_size'])
-    if not (nlp.path / 'similarity').exists():
-        (nlp.path / 'similarity').mkdir()
-    print("Saving to", nlp.path / 'similarity')
-    weights = model.get_weights()
-    with (nlp.path / 'similarity' / 'model').open('wb') as file_:
-        pickle.dump(weights[1:], file_)
-    with (nlp.path / 'similarity' / 'config.json').open('wb') as file_:
-        file_.write(model.to_json())
+        batch_size=settings['batch_size'],
+        callbacks=[json_logging_callback])
 
 
 def evaluate(dev_loc):
