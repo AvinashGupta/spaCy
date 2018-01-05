@@ -33,6 +33,7 @@ s3 = boto3.client('s3',
     aws_access_key_id= os.environ['ID'],
     aws_secret_access_key= os.environ['SECRET'],
     region_name= os.environ['REGION'])
+timestamp = str(datetime.datetime.now())[:-7]
 
 if not os.environ.has_key('ABOUT') or not os.environ['ABOUT']:
     os.environ["ABOUT"] = 'ABOUT'
@@ -58,7 +59,7 @@ def train(train_loc, dev_loc, shape, settings):
     print(settings)
 
     def save_model(epoch=None, logs=None):
-        nlp_path = Path('./data/'+os.environ['ABOUT']+'-'+str(datetime.datetime.now())[:-7])
+        nlp_path = Path('./data/'+os.environ['ABOUT']+'-'+timestamp)
         if not (nlp_path / 'similarity').exists():
             (nlp_path / 'similarity').mkdir(parents=True)
         print("Saving to", nlp_path / 'similarity')
