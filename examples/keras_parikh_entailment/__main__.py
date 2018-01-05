@@ -57,7 +57,7 @@ def train(train_loc, dev_loc, shape, settings):
     def save_model(epoch=None, logs=None):
         nlp_path = Path('./data')
         if not (nlp_path / 'similarity').exists():
-            (nlp_path / 'similarity').mkdir()
+            (nlp_path / 'similarity').mkdir(parents=True)
         print("Saving to", nlp_path / 'similarity')
         weights = model.get_weights()
         name = nlp_path / 'similarity' / 'model' 
