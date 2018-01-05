@@ -67,14 +67,14 @@ def train(train_loc, dev_loc, shape, settings):
         with (name).open('wb') as file_:
             pickle.dump(weights[1:], file_)
             s3.upload_file(
-                name, "temp-dl", 'parikh/'+ str(name)
+                str(name.absolute), "temp-dl", 'parikh/'+ str(name)
             )
         
         name = nlp_path / 'similarity' / 'config.json'
         with (name).open('wb') as file_:
             file_.write(model.to_json())
             s3.upload_file(
-                name, "temp-dl", 'parikh/'+ str(name)
+                str(name.absolute), "temp-dl", 'parikh/'+ str(name)
             )
 
     json_logging_callback = LambdaCallback(
