@@ -39,6 +39,7 @@ def train(train_loc, dev_loc, shape, settings):
     dev_texts1, dev_texts2, dev_labels = read_snli(dev_loc)
 
     print("Loading spaCy")
+    # spacy.util.set_data_path('/Users/avinashgupta/data/spacy/complete_data/data')
     nlp = spacy.load('en')
     assert nlp.path is not None
     print("Compiling network")
@@ -54,18 +55,19 @@ def train(train_loc, dev_loc, shape, settings):
     print(settings)
 
     def save_model(epoch=None, logs=None):
-        if not (nlp.path / 'similarity').exists():
-            (nlp.path / 'similarity').mkdir()
-        print("Saving to", nlp.path / 'similarity')
+        nlp_path = Path('./data')
+        if not (nlp_path / 'similarity').exists():
+            (nlp_path / 'similarity').mkdir()
+        print("Saving to", nlp_path / 'similarity')
         weights = model.get_weights()
-        name = nlp.path / 'similarity' / 'model' 
+        name = nlp_path / 'similarity' / 'model' 
         with (name).open('wb') as file_:
             pickle.dump(weights[1:], file_)
             s3.upload_file(
                 name, "temp-dl", name
             )
         
-        name = nlp.path / 'similarity' / 'config.json'
+        name = nlp_path / 'similarity' / 'config.json'
         with (name).open('wb') as file_:
             file_.write(model.to_json())
             s3.upload_file(
@@ -150,7 +152,7 @@ def main(mode, train_loc, dev_loc,
         dropout=0.2,
         learn_rate=0.001,
         batch_size=100,
-        nr_epoch=5):
+        nr_epoch=300):
     shape = (max_length, nr_hidden, 3)
     settings = {
         'lr': learn_rate,
