@@ -4,6 +4,7 @@
 from __future__ import division, unicode_literals, print_function
 import spacy
 import os
+import datetime
 
 import sys  
 
@@ -33,6 +34,8 @@ s3 = boto3.client('s3',
     aws_secret_access_key= os.environ['SECRET'],
     region_name= os.environ['REGION'])
 
+if not os.environ.has_key('ABOUT') or not os.environ['ABOUT']:
+    os.environ["ABOUT"] = 'ABOUT'
 
 def train(train_loc, dev_loc, shape, settings):
     train_texts1, train_texts2, train_labels = read_snli(train_loc)
@@ -55,7 +58,7 @@ def train(train_loc, dev_loc, shape, settings):
     print(settings)
 
     def save_model(epoch=None, logs=None):
-        nlp_path = Path('./data')
+        nlp_path = Path('./data/'+os.environ['ABOUT']+'-'+str(datetime.datetime.now())[:-7])
         if not (nlp_path / 'similarity').exists():
             (nlp_path / 'similarity').mkdir(parents=True)
         print("Saving to", nlp_path / 'similarity')
