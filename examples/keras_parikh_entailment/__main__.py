@@ -64,7 +64,30 @@ def train(train_loc, dev_loc, shape, settings):
             (nlp_path / 'similarity').mkdir(parents=True)
         print("Saving to", nlp_path / 'similarity')
         weights = model.get_weights()
-        name = nlp_path / 'similarity' / 'model' 
+
+        
+
+        name = nlp_path / 'similarity' / 'model.hdf5'
+        status_file_name = nlp_path / 'similarity' / 'model.json'
+
+        model.save( str(name.absolute()) )
+        status_file = open( str(status_file_name.absolute()) , 'w')
+        status_file.write(json.dumps({
+            'epoch' : epoch,
+            'logs' : logs
+        }))
+        status_file.close()
+
+        s3.upload_file(
+            str(name.absolute()), "temp-dl", 'parikh/'+ str(name)
+        )
+        s3.upload_file(
+            str(status_file_name.absolute()), "temp-dl", 'parikh/'+ str(status_file_name)
+        )
+
+
+
+        name = nlp_path / 'similarity' / 'model'
         with (name).open('wb') as file_:
             pickle.dump(weights[1:], file_)
             s3.upload_file(
