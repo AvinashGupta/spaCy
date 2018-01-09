@@ -115,7 +115,7 @@ def train(train_loc, dev_loc, shape, settings):
         """docstring for CB"""
         def __init__(self):
             super(CB, self).__init__()
-        def on_epoch_begin(self, epoch, logs):
+        def on_epoch_end(self, epoch, logs):
             save_model(epoch, logs)
             
     # json_logging_callback = LambdaCallback(
