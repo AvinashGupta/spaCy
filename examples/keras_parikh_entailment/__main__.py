@@ -16,7 +16,8 @@ from pathlib import Path
 import ujson as json
 import numpy
 from keras.utils.np_utils import to_categorical
-from keras.callbacks import ModelCheckpoint, LambdaCallback
+from keras.callbacks import ModelCheckpoint, Callback
+from keras.models import model_from_json, load_model
 
 from spacy_hook import get_embeddings, get_word_ids
 from spacy_hook import create_similarity_pipeline
@@ -48,6 +49,15 @@ def train(train_loc, dev_loc, shape, settings):
     assert nlp.path is not None
     print("Compiling network")
     model = build_model(get_embeddings(nlp.vocab), shape, settings)
+
+    # name = Path(os.path.expanduser('~')) / 'data' / 'temp' / 'config.json'
+    # with (name).open('wb') as file_:
+    #     file_.write(model.to_json())
+
+    # name = Path(os.path.expanduser('~')) / 'data' / 'temp' / 'model.hdf5'
+    # model.save_weights(str(name.absolute()))
+
+    
     print("Processing texts...")
     Xs = []
     for texts in (train_texts1, train_texts2, dev_texts1, dev_texts2):
@@ -55,6 +65,7 @@ def train(train_loc, dev_loc, shape, settings):
                          max_length=shape[0],
                          rnn_encode=settings['gru_encode'],
                          tree_truncate=settings['tree_truncate']))
+
     train_X1, train_X2, dev_X1, dev_X2 = Xs
     print(settings)
 
@@ -65,28 +76,19 @@ def train(train_loc, dev_loc, shape, settings):
         print("Saving to", nlp_path / 'similarity')
         weights = model.get_weights()
 
-        
-
-        name = nlp_path / 'similarity' / 'model.hdf5'
-        status_file_name = nlp_path / 'similarity' / 'model.json'
-
-        model.save( str(name.absolute()) )
+        # save status
+        status_file_name = nlp_path / 'similarity' / 'status.json'
         status_file = open( str(status_file_name.absolute()) , 'w')
         status_file.write(json.dumps({
             'epoch' : epoch,
             'logs' : logs
         }))
         status_file.close()
-
-        s3.upload_file(
-            str(name.absolute()), "temp-dl", 'parikh/'+ str(name)
-        )
         s3.upload_file(
             str(status_file_name.absolute()), "temp-dl", 'parikh/'+ str(status_file_name)
         )
 
-
-
+        # save model weight partially
         name = nlp_path / 'similarity' / 'model'
         with (name).open('wb') as file_:
             pickle.dump(weights[1:], file_)
@@ -94,6 +96,7 @@ def train(train_loc, dev_loc, shape, settings):
                 str(name.absolute()), "temp-dl", 'parikh/'+ str(name)
             )
         
+        # save model config
         name = nlp_path / 'similarity' / 'config.json'
         with (name).open('wb') as file_:
             file_.write(model.to_json())
@@ -101,9 +104,24 @@ def train(train_loc, dev_loc, shape, settings):
                 str(name.absolute()), "temp-dl", 'parikh/'+ str(name)
             )
 
-    json_logging_callback = LambdaCallback(
-        on_epoch_end=save_model,
-    )
+        # name = Path(os.path.expanduser('~')) / 'data' / 'temp' / 'model.hdf5'
+        name = nlp_path / 'similarity' / 'model.hdf5'
+        model.save_weights(str(name.absolute()))
+        s3.upload_file(
+            str(name.absolute()), "temp-dl", 'parikh/'+ str(name)
+        )
+
+    class CB(Callback):
+        """docstring for CB"""
+        def __init__(self):
+            super(CB, self).__init__()
+        def on_epoch_begin(self, epoch, logs):
+            save_model(epoch, logs)
+            
+    # json_logging_callback = LambdaCallback(
+    #     on_epoch_end=save_model,
+    # )
+    json_logging_callback = CB()
 
     model.fit(
         [train_X1, train_X2],
