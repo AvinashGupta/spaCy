@@ -24,6 +24,7 @@ from spacy_hook import create_similarity_pipeline
 
 from keras_decomposable_attention import build_model
 import boto3
+import tensorflow as tf
 
 try:
     import cPickle as pickle
@@ -58,8 +59,8 @@ def test():
         'gru_encode': gru_encode
     }
     texts = [
-      u'yes',
-      u'no'
+      u'i like tables',
+      u'i don\'t like tables'
     ]
 
     model = model_from_json(config_file)

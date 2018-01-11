@@ -5,6 +5,9 @@
 # Practical state-of-the-art text similarity with spaCy and Keras
 import numpy
 
+import tensorflow as tf
+tf.python.control_flow_ops = tf
+
 from keras.layers import InputSpec, Layer, Input, Dense, merge
 from keras.layers import Lambda, Activation, Dropout, Embedding, TimeDistributed
 from keras.layers import Bidirectional, GRU, LSTM

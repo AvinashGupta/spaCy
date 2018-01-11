@@ -1,6 +1,11 @@
 # -*- encoding:utf-8 -*-
 # coding: utf-8
 
+'''
+tensorflow==0.12.0
+keras==6417d90d
+'''
+
 from __future__ import division, unicode_literals, print_function
 import spacy
 import os
@@ -24,6 +29,7 @@ from spacy_hook import create_similarity_pipeline
 
 from keras_decomposable_attention import build_model
 import boto3
+import tensorflow as tf
 
 try:
     import cPickle as pickle
@@ -122,6 +128,7 @@ def train(train_loc, dev_loc, shape, settings):
     #     on_epoch_end=save_model,
     # )
     json_logging_callback = CB()
+    keras.backend.get_session().run(tf.initialize_all_variables())
 
     model.fit(
         [train_X1, train_X2],
