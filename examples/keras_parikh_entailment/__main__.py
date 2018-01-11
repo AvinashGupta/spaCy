@@ -20,6 +20,7 @@ import plac
 from pathlib import Path
 import ujson as json
 import numpy
+import keras
 from keras.utils.np_utils import to_categorical
 from keras.callbacks import ModelCheckpoint, Callback
 from keras.models import model_from_json, load_model
